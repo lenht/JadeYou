@@ -67,33 +67,52 @@
 
           <div class="checkout-section">
             <h2>Payment Method</h2>
-            <div class="payment-options">
-              <label class="payment-option">
-                <input type="radio" name="payment" value="Bank Transfer" checked>
-                <div>
-                  <div class="po-title">Bank Transfer</div>
-                  <div class="po-desc">Your Atelier advisor will send secure transfer details once your reservation is confirmed.</div>
+
+            <div class="pay-tabs">
+              <button type="button" class="pay-tab active" id="tabPaypal" data-panel="payPanelPaypal">Pay Now</button>
+              <button type="button" class="pay-tab" id="tabAdvisor" data-panel="payPanelAdvisor">Arrange with Advisor</button>
+            </div>
+
+            <div class="pay-panel active" id="payPanelPaypal">
+              <p class="pay-panel-note">Pay securely with PayPal, or with a Visa, Mastercard, or American Express card via PayPal's guest checkout — no PayPal account required for card payments.</p>
+              <div class="paypal-wrap">
+                <div class="paypal-lock" id="paypalLock">
+                  <div class="paypal-lock-msg">Complete your name, email, and phone above to enable payment.</div>
                 </div>
-              </label>
-              <label class="payment-option">
-                <input type="radio" name="payment" value="Request Invoice">
-                <div>
-                  <div class="po-title">Request Invoice</div>
-                  <div class="po-desc">Receive a formal invoice by email, payable by card or transfer.</div>
-                </div>
-              </label>
-              <label class="payment-option">
-                <input type="radio" name="payment" value="Pay In Person at Atelier">
-                <div>
-                  <div class="po-title">Pay In Person at the Atelier</div>
-                  <div class="po-desc">Complete payment during a private viewing in Central, Hong Kong.</div>
-                </div>
-              </label>
+                <div id="paypal-button-container"></div>
+              </div>
+              <div class="paypal-badges"><span>Visa</span><span>Mastercard</span><span>Amex</span><span>PayPal Balance</span></div>
+              <p class="sandbox-note">This checkout runs on PayPal's sandbox environment for demonstration — no real funds move. To accept live payments, swap in your business account's live Client ID from developer.paypal.com (see the note at the end of this build).</p>
+            </div>
+
+            <div class="pay-panel" id="payPanelAdvisor">
+              <div class="payment-options">
+                <label class="payment-option">
+                  <input type="radio" name="payment" value="Bank Transfer" checked>
+                  <div>
+                    <div class="po-title">Bank Transfer</div>
+                    <div class="po-desc">Your Atelier advisor will send secure transfer details once your reservation is confirmed.</div>
+                  </div>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="payment" value="Request Invoice">
+                  <div>
+                    <div class="po-title">Request Invoice</div>
+                    <div class="po-desc">Receive a formal invoice by email, payable by card or transfer.</div>
+                  </div>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="payment" value="Pay In Person at Atelier">
+                  <div>
+                    <div class="po-title">Pay In Person at the Atelier</div>
+                    <div class="po-desc">Complete payment during a private viewing in Central, Hong Kong.</div>
+                  </div>
+                </label>
+              </div>
+              <button type="submit" class="btn btn-solid checkout-submit">Submit Reservation Request</button>
+              <p class="cart-note" style="margin-top:14px;">This sends your reservation to our Atelier team by email — no payment is taken on this page. We'll confirm final availability and total, then arrange secure payment with you directly.</p>
             </div>
           </div>
-
-          <button type="submit" class="btn btn-solid checkout-submit">Submit Reservation Request</button>
-          <p class="cart-note" style="margin-top:14px;">This sends your reservation to our Atelier team by email — no payment is taken on this page. We'll confirm final availability and total, then arrange secure payment with you directly.</p>
         </form>
       </div>
 
@@ -114,6 +133,16 @@
       <p>Your reservation request has been prepared for our Atelier team. If your email client didn't open automatically, please email us directly at hello@jadeyou.com.</p>
       <p>We reply personally within two business days to confirm availability and arrange payment.</p>
       <a href="index.html" class="btn btn-ghost" style="margin-top:20px;display:inline-block;">Return Home</a>
+    </div>
+
+    <div id="paypalConfirm" class="checkout-confirm">
+      <div class="seal">&#10003;</div>
+      <h2>Payment Received</h2>
+      <p id="paypalConfirmDetail">Thank you — your PayPal payment has been completed.</p>
+      <p>A receipt has been emailed to you automatically by PayPal. To arrange delivery or a private collection appointment, let our Atelier know:</p>
+      <a href="#" id="paypalNotifyBtn" class="btn btn-solid" style="margin-top:10px;display:inline-block;">Email Jade You to Arrange Delivery</a>
+      <br>
+      <a href="index.html" class="btn btn-ghost" style="margin-top:14px;display:inline-block;">Return Home</a>
     </div>
   </div>
 </section>
@@ -179,6 +208,8 @@
 
 <script src="main.js"></script>
 <script src="cart.js"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=HKD&components=buttons&enable-funding=card"></script>
+<script src="paypal-checkout.js"></script>
 <script>
   (function(){
     var pop = document.getElementById('wechatPop');

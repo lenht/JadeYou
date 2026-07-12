@@ -788,6 +788,38 @@
   .payment-option .po-desc{ font-family:var(--sans-ui); font-size:0.82rem; color:var(--ink-soft); line-height:1.55; }
   .payment-option.selected{ border-color:var(--jade-mid); background:rgba(11,122,69,0.04); }
 
+  .pay-tabs{ display:flex; gap:2px; margin-bottom:24px; border:1px solid rgba(34,26,40,0.14); border-radius:2px; overflow:hidden; }
+  .pay-tab{
+    flex:1; padding:14px 12px; background:var(--parchment); border:none; cursor:pointer;
+    font-family:var(--sans-ui); font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-soft);
+    transition:background .25s ease, color .25s ease;
+  }
+  .pay-tab.active{ background:var(--deep-violet); color:var(--parchment); }
+  .pay-panel{ display:none; }
+  .pay-panel.active{ display:block; }
+  .pay-panel-note{ font-family:var(--serif-body); font-size:0.98rem; color:var(--ink-soft); margin:0 0 20px; line-height:1.6; }
+
+  .paypal-wrap{ position:relative; min-height:52px; }
+  .paypal-lock{
+    position:absolute; inset:0; z-index:5;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    background:rgba(247,241,231,0.88); border:1px dashed rgba(34,26,40,0.22); border-radius:3px;
+    padding:14px; transition:opacity .25s ease;
+  }
+  .paypal-lock-msg{ font-family:var(--sans-ui); font-size:0.78rem; color:var(--ink-soft); letter-spacing:0.02em; }
+  .paypal-lock.unlocked{ display:none; }
+  #paypal-button-container{ min-height:52px; }
+  .paypal-badges{
+    display:flex; align-items:center; gap:10px; margin-top:16px;
+    font-family:var(--sans-ui); font-size:0.68rem; letter-spacing:0.06em; color:var(--ink-soft);
+  }
+  .paypal-badges span{ border:1px solid rgba(34,26,40,0.18); border-radius:2px; padding:4px 8px; }
+
+  .sandbox-note{
+    font-family:var(--sans-ui); font-size:0.72rem; color:var(--gold-dim); background:rgba(201,162,76,0.1);
+    border:1px solid rgba(201,162,76,0.3); border-radius:2px; padding:10px 14px; margin-top:16px; line-height:1.6;
+  }
+
   .order-summary{
     background:var(--parchment-2); border:1px solid rgba(34,26,40,0.08); border-radius:2px; padding:32px;
     position:sticky; top:120px;
