@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../styles.css">
+<script>window.SITE_PREFIX = "../";</script>
 </head>
 <body>
 <header class="site-header" id="siteHeader">
@@ -25,14 +26,23 @@
     <a href="../index.html#atelier">Atelier</a>
     <a href="../index.html#atelier" class="nav-cta">Request Appointment</a>
   </nav>
+  <button class="cart-toggle" aria-label="Open reservation cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+    <span class="cart-badge hidden">0</span>
+  </button>
   <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
     <span></span><span></span><span></span>
   </button>
 </header>
 
-<section class="product-detail">
+<section class="breadcrumb-band">
   <div class="wrap">
     <div class="breadcrumb"><a href="../index.html">Home</a> <span class="sep">/</span> <a href="../collections/mens.html">Men's</a> <span class="sep">/</span> <span class="current">The Wrist Guard</span></div>
+  </div>
+</section>
+
+<section class="product-detail">
+  <div class="wrap">
     <div class="product-detail-grid">
       <div class="product-hero-image tone-jade">
         <svg viewBox="0 0 48 48" fill="none" stroke-width="1.1"><rect x="12" y="16" width="24" height="16" rx="2"/><path d="M18 16 V10 H30 V16"/></svg>
@@ -71,6 +81,7 @@
         <div class="p-ref">JY-M001</div>
         <h3>The Signet</h3>
         <p class="p-material">Men's jadeite signet ring, 18k yellow gold</p>
+        <p class="p-price">HK$158,000</p>
         <span class="p-link">View Details &rarr;</span>
       </a>
       <a class="product-card" href="../product/the-cufflinks.html">
@@ -78,6 +89,7 @@
         <div class="p-ref">JY-M002</div>
         <h3>The Cufflinks</h3>
         <p class="p-material">Jadeite cabochon cufflinks, 18k white gold</p>
+        <p class="p-price">HK$96,000</p>
         <span class="p-link">View Details &rarr;</span>
       </a>
       <a class="product-card" href="../product/circle-ring.html">
@@ -85,6 +97,7 @@
         <div class="p-ref">JY-R001</div>
         <h3>The Circle Ring</h3>
         <p class="p-material">Jadeite cabochon, 18k yellow gold</p>
+        <p class="p-price">HK$128,000</p>
         <span class="p-link">View Details &rarr;</span>
       </a>
     </div>
@@ -136,7 +149,22 @@
   </div>
 </div>
 
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer-head">
+    <h3>Your Reservations <span class="eyebrow">(held for 48 hours)</span></h3>
+    <button class="cart-drawer-close" id="cartDrawerClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-drawer-foot" id="cartDrawerFoot" style="display:none;">
+    <div class="cart-subtotal"><span>Subtotal</span><span class="amt" id="cartSubtotal">HK$0</span></div>
+    <div class="cart-note">Shipping and final total confirmed by your Atelier advisor.</div>
+    <a href="../checkout.html" class="btn btn-solid">Proceed to Checkout</a>
+  </div>
+</div>
+
 <script src="../main.js"></script>
+<script src="../cart.js"></script>
 <script>
   (function(){
     var pop = document.getElementById('wechatPop');

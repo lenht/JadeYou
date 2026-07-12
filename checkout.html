@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — Jade You</title>
+<meta name="description" content="Complete your reservation with Jade You.">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script>window.SITE_PREFIX = "";</script>
+</head>
+<body>
+<header class="site-header" id="siteHeader">
+  <a href="index.html" class="brand">
+    <img src="assets/logo-mark-128.png" alt="">
+    <span>JADE&nbsp;YOU</span>
+  </a>
+  <nav class="nav-links" id="navLinks">
+    <a href="index.html#collections">Collections</a>
+    <a href="index.html#provenance">Provenance</a>
+    <a href="index.html#journal">Jade Journal</a>
+    <a href="index.html#atelier">Atelier</a>
+    <a href="index.html#atelier" class="nav-cta">Request Appointment</a>
+  </nav>
+  <button class="cart-toggle" aria-label="Open reservation cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+    <span class="cart-badge hidden">0</span>
+  </button>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<section class="breadcrumb-band">
+  <div class="wrap">
+    <div class="breadcrumb"><a href="index.html">Home</a> <span class="sep">/</span> <span class="current">Checkout</span></div>
+  </div>
+</section>
+
+<section class="checkout">
+  <div class="wrap">
+    <h1>Checkout</h1>
+
+    <div id="checkoutEmpty" class="checkout-empty">
+      <p>Your reservation list is currently empty.</p>
+      <a href="index.html#collections" class="btn btn-solid">Explore the Collections</a>
+    </div>
+
+    <div id="checkoutFull" class="checkout-grid" style="display:none;">
+      <div>
+        <form class="checkout-form" id="checkoutForm">
+          <div class="checkout-section">
+            <h2>Contact Details</h2>
+            <div class="form-row">
+              <div class="field"><label for="coName">Full Name</label><input type="text" id="coName" required></div>
+              <div class="field"><label for="coEmail">Email</label><input type="email" id="coEmail" required></div>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="coPhone">Phone</label><input type="tel" id="coPhone" required></div>
+              <div class="field"><label for="coAddress">Delivery / Appointment Address</label><input type="text" id="coAddress"></div>
+            </div>
+          </div>
+
+          <div class="checkout-section">
+            <h2>Payment Method</h2>
+            <div class="payment-options">
+              <label class="payment-option">
+                <input type="radio" name="payment" value="Bank Transfer" checked>
+                <div>
+                  <div class="po-title">Bank Transfer</div>
+                  <div class="po-desc">Your Atelier advisor will send secure transfer details once your reservation is confirmed.</div>
+                </div>
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="payment" value="Request Invoice">
+                <div>
+                  <div class="po-title">Request Invoice</div>
+                  <div class="po-desc">Receive a formal invoice by email, payable by card or transfer.</div>
+                </div>
+              </label>
+              <label class="payment-option">
+                <input type="radio" name="payment" value="Pay In Person at Atelier">
+                <div>
+                  <div class="po-title">Pay In Person at the Atelier</div>
+                  <div class="po-desc">Complete payment during a private viewing in Central, Hong Kong.</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-solid checkout-submit">Submit Reservation Request</button>
+          <p class="cart-note" style="margin-top:14px;">This sends your reservation to our Atelier team by email — no payment is taken on this page. We'll confirm final availability and total, then arrange secure payment with you directly.</p>
+        </form>
+      </div>
+
+      <div class="order-summary">
+        <h2>Order Summary</h2>
+        <div id="orderItems"></div>
+        <div class="order-totals">
+          <div><span>Subtotal</span><span id="orderSubtotal">HK$0</span></div>
+          <div><span>Shipping</span><span>Confirmed by advisor</span></div>
+          <div class="total-row"><span>Estimated Total</span><span id="orderTotal">HK$0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="checkoutConfirm" class="checkout-confirm">
+      <div class="seal">&#10003;</div>
+      <h2>Reservation Sent</h2>
+      <p>Your reservation request has been prepared for our Atelier team. If your email client didn't open automatically, please email us directly at hello@jadeyou.com.</p>
+      <p>We reply personally within two business days to confirm availability and arrange payment.</p>
+      <a href="index.html" class="btn btn-ghost" style="margin-top:20px;display:inline-block;">Return Home</a>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <a href="index.html" class="footer-brand">
+        <img src="assets/logo-mark-128.png" alt="">
+        <span>JADE&nbsp;YOU</span>
+      </a>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="index.html#collections">Collections</a>
+          <a href="index.html#provenance">Provenance</a>
+          <a href="index.html#journal">Jade Journal</a>
+        </div>
+        <div class="footer-col">
+          <h4>House</h4>
+          <a href="index.html#atelier">Atelier</a>
+          <a href="index.html#atelier">Request Appointment</a>
+          <a href="index.html#atelier">Bespoke Commissions</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@jadeyou.com">hello@jadeyou.com</a>
+          <a href="index.html#atelier">Central, Hong Kong</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Jade You. All rights reserved.</span>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+        <a href="#" aria-label="WeChat"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="wechat-pop" id="wechatPop">
+  <div class="wechat-card">
+    <button class="wechat-close" id="wechatClose" aria-label="Close">&times;</button>
+    <img src="assets/wechat-qr.png" alt="Jade You WeChat QR code">
+    <h4>Add Jade You on WeChat</h4>
+    <p>Scan to chat with our Atelier team directly, or search ID: JadeYouHK</p>
+  </div>
+</div>
+
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer-head">
+    <h3>Your Reservations <span class="eyebrow">(held for 48 hours)</span></h3>
+    <button class="cart-drawer-close" id="cartDrawerClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-drawer-foot" id="cartDrawerFoot" style="display:none;">
+    <div class="cart-subtotal"><span>Subtotal</span><span class="amt" id="cartSubtotal">HK$0</span></div>
+    <div class="cart-note">Shipping and final total confirmed by your Atelier advisor.</div>
+    <a href="checkout.html" class="btn btn-solid">Proceed to Checkout</a>
+  </div>
+</div>
+
+<script src="main.js"></script>
+<script src="cart.js"></script>
+<script>
+  (function(){
+    var pop = document.getElementById('wechatPop');
+    var close = document.getElementById('wechatClose');
+    document.querySelectorAll('.js-wechat').forEach(function(btn){
+      btn.addEventListener('click', function(e){ e.preventDefault(); pop.classList.add('open'); });
+    });
+    if(close) close.addEventListener('click', function(){ pop.classList.remove('open'); });
+    if(pop) pop.addEventListener('click', function(e){ if(e.target===pop) pop.classList.remove('open'); });
+  })();
+</script>
+</body>
+</html>
