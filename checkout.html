@@ -88,21 +88,21 @@
             <div class="pay-panel" id="payPanelAdvisor">
               <div class="payment-options">
                 <label class="payment-option">
-                  <input type="radio" name="payment" value="Bank Transfer" checked>
+                  <input type="radio" name="payment" value="bank_transfer" checked>
                   <div>
                     <div class="po-title">Bank Transfer</div>
                     <div class="po-desc">Your Atelier advisor will send secure transfer details once your reservation is confirmed.</div>
                   </div>
                 </label>
                 <label class="payment-option">
-                  <input type="radio" name="payment" value="Request Invoice">
+                  <input type="radio" name="payment" value="invoice">
                   <div>
                     <div class="po-title">Request Invoice</div>
                     <div class="po-desc">Receive a formal invoice by email, payable by card or transfer.</div>
                   </div>
                 </label>
                 <label class="payment-option">
-                  <input type="radio" name="payment" value="Pay In Person at Atelier">
+                  <input type="radio" name="payment" value="in_person">
                   <div>
                     <div class="po-title">Pay In Person at the Atelier</div>
                     <div class="po-desc">Complete payment during a private viewing in Central, Hong Kong.</div>
@@ -206,10 +206,11 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script src="main.js"></script>
 <script src="cart.js"></script>
 <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=HKD&components=buttons&enable-funding=card"></script>
-<script src="paypal-checkout.js"></script>
+<script src="checkout-payment.js"></script>
 <script>
   (function(){
     var pop = document.getElementById('wechatPop');

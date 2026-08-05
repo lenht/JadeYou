@@ -173,11 +173,14 @@
     const firstPayment = document.querySelector('.payment-option');
     if (firstPayment) firstPayment.classList.add('selected');
 
-    // checkout submit -> compiles the reservation into an email to the Atelier
-    // (there is no payment backend wired up here — see the note in the UI)
+    // checkout submit -> submits the reservation through the
+    // submit-advisor-order Edge Function (reserves real stock, creates a
+    // real pending order), falling back to the mailto: draft only if that
+    // call itself fails (e.g. Supabase unreachable) so a customer's
+    // request is never simply lost.
     const checkoutForm = document.getElementById('checkoutForm');
     if (checkoutForm) {
-      checkoutForm.addEventListener('submit', function(e){
+      checkoutForm.addEventListener('submit', async function(e){
         e.preventDefault();
         const items = Cart.get();
         if (items.length === 0) return;
@@ -186,21 +189,54 @@
         const phone = document.getElementById('coPhone').value;
         const address = document.getElementById('coAddress').value;
         const payment = document.querySelector('input[name="payment"]:checked');
-        const paymentLabel = payment ? payment.value : 'Not specified';
+        const paymentValue = payment ? payment.value : 'bank_transfer';
+        const paymentLabels = { bank_transfer: 'Bank Transfer', invoice: 'Request Invoice', in_person: 'Pay In Person at Atelier' };
 
-        const lines = items.map(i => `  • ${i.name} (${i.ref}) × ${i.qty} — ${fmt(i.price*i.qty)}`).join('\n');
-        const subtotal = fmt(Cart.subtotal());
+        const submitBtn = checkoutForm.querySelector('.checkout-submit');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
 
-        const subject = encodeURIComponent('Reservation Request — ' + items.map(i=>i.ref).join(', '));
-        const body = encodeURIComponent(
-          `Hello Jade You,\n\nI would like to reserve the following piece(s):\n\n${lines}\n\nSubtotal: ${subtotal}\n\nPreferred payment method: ${paymentLabel}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nDelivery / Appointment Address: ${address}\n\nPlease confirm availability and final total, and advise next steps to complete payment.`
-        );
+        function mailtoFallback(){
+          const lines = items.map(i => `  • ${i.name} (${i.ref}) × ${i.qty} — ${fmt(i.price*i.qty)}`).join('\n');
+          const subtotal = fmt(Cart.subtotal());
+          const subject = encodeURIComponent('Reservation Request — ' + items.map(i=>i.ref).join(', '));
+          const body = encodeURIComponent(
+            `Hello Jade You,\n\nI would like to reserve the following piece(s):\n\n${lines}\n\nSubtotal: ${subtotal}\n\nPreferred payment method: ${paymentLabels[paymentValue] || paymentValue}\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nDelivery / Appointment Address: ${address}\n\nPlease confirm availability and final total, and advise next steps to complete payment.`
+          );
+          window.location.href = 'mailto:hello@jadeyou.com?subject=' + subject + '&body=' + body;
+        }
 
-        window.location.href = 'mailto:hello@jadeyou.com?subject=' + subject + '&body=' + body;
+        try {
+          const res = await fetch(`${window.SUPABASE_FUNCTIONS_URL}/submit-advisor-order`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + window.SUPABASE_ANON_KEY,
+              'apikey': window.SUPABASE_ANON_KEY,
+            },
+            body: JSON.stringify({
+              items: items.map(i => ({ slug: i.slug, quantity: i.qty })),
+              guestName: name,
+              guestEmail: email,
+              guestPhone: phone,
+              deliveryAddress: { notes: address },
+              paymentMethod: paymentValue,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Request failed');
 
-        document.getElementById('checkoutFull').style.display = 'none';
-        document.getElementById('checkoutConfirm').classList.add('show');
-        Cart.clear();
+          document.getElementById('checkoutFull').style.display = 'none';
+          document.getElementById('checkoutConfirm').classList.add('show');
+          Cart.clear();
+        } catch (err) {
+          console.error('submit-advisor-order failed, falling back to email:', err);
+          mailtoFallback();
+          document.getElementById('checkoutFull').style.display = 'none';
+          document.getElementById('checkoutConfirm').classList.add('show');
+          Cart.clear();
+        } finally {
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Reservation Request'; }
+        }
       });
     }
   });
