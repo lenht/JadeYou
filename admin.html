@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Jade You</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<!-- ============ LOGIN ============ -->
+<div class="admin-login" id="adminLogin">
+  <div class="admin-login-card">
+    <div class="admin-login-brand">
+      <img src="assets/logo-mark-128.png" alt="">
+      <span>JADE&nbsp;YOU</span>
+    </div>
+    <div class="admin-login-sub">Admin Panel</div>
+    <div class="admin-error" id="loginError"></div>
+    <form id="loginForm">
+      <div class="admin-field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" required autocomplete="username">
+      </div>
+      <div class="admin-field">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="admin-btn admin-btn-block" id="loginBtn">Sign In</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ SHELL ============ -->
+<div class="admin-shell" id="adminShell">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <img src="assets/logo-mark-128.png" alt="">
+      <span>JADE YOU</span>
+    </div>
+    <button class="admin-nav-btn" data-tab="dashboard">Dashboard</button>
+    <button class="admin-nav-btn" data-tab="products">Products</button>
+    <button class="admin-nav-btn" data-tab="categories">Categories</button>
+    <button class="admin-nav-btn" data-tab="orders">Orders</button>
+    <button class="admin-nav-btn" data-tab="enquiries">Enquiries</button>
+    <div class="admin-sidebar-foot">
+      <div class="admin-who" id="adminWho"></div>
+      <button class="admin-btn admin-btn-ghost admin-btn-sm admin-btn-block" id="signOutBtn">Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+
+    <!-- ---------- Dashboard ---------- -->
+    <section class="admin-panel" id="panel-dashboard">
+      <div class="admin-panel-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p>An overview of orders, payments, and stock.</p>
+        </div>
+      </div>
+      <div class="admin-stats-grid" id="dashboardStats"><div class="admin-loading">Loading…</div></div>
+      <div class="admin-section-title">Sold Out / No Stock Available</div>
+      <div id="lowStockList"><div class="admin-loading">Loading…</div></div>
+    </section>
+
+    <!-- ---------- Products ---------- -->
+    <section class="admin-panel" id="panel-products">
+      <div class="admin-panel-head">
+        <div>
+          <h1>Products</h1>
+          <p>Edit prices, stock, descriptions, and photos. Deactivating hides a piece from the site without deleting its order history.</p>
+        </div>
+        <button class="admin-btn" id="addProductBtn">+ Add Product</button>
+      </div>
+      <div id="productEditorWrap"></div>
+      <div id="productsTableWrap"><div class="admin-loading">Loading…</div></div>
+    </section>
+
+    <!-- ---------- Categories ---------- -->
+    <section class="admin-panel" id="panel-categories">
+      <div class="admin-panel-head">
+        <div>
+          <h1>Categories</h1>
+          <p>The six collections shown on the site. Slugs aren't editable here since they're baked into page URLs.</p>
+        </div>
+      </div>
+      <div id="categoriesList"><div class="admin-loading">Loading…</div></div>
+    </section>
+
+    <!-- ---------- Orders ---------- -->
+    <section class="admin-panel" id="panel-orders">
+      <div class="admin-panel-head">
+        <div>
+          <h1>Orders</h1>
+          <p>Update fulfillment status, confirm advisor-arranged payments, and record refunds.</p>
+        </div>
+      </div>
+      <div class="admin-filters">
+        <div class="admin-field">
+          <label>Payment Status</label>
+          <select id="filterPaymentStatus">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="failed">Failed</option>
+            <option value="partially_refunded">Partially Refunded</option>
+            <option value="refunded">Refunded</option>
+          </select>
+        </div>
+        <div class="admin-field">
+          <label>Fulfillment Status</label>
+          <select id="filterFulfillmentStatus">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="processing">Processing</option>
+            <option value="ready_for_collection">Ready for Collection</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <button class="admin-btn admin-btn-sm" id="applyOrderFilters">Apply Filters</button>
+      </div>
+      <div id="ordersTableWrap"><div class="admin-loading">Loading…</div></div>
+    </section>
+
+    <!-- ---------- Enquiries ---------- -->
+    <section class="admin-panel" id="panel-enquiries">
+      <div class="admin-panel-head">
+        <div>
+          <h1>Enquiries</h1>
+          <p>"Contact for Price" leads submitted from product pages.</p>
+        </div>
+      </div>
+      <div id="enquiriesTableWrap"><div class="admin-loading">Loading…</div></div>
+    </section>
+
+  </main>
+</div>
+
+<div class="admin-toast" id="adminToast"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
