@@ -35,9 +35,9 @@ export async function getPayPalAccessToken(): Promise<string> {
   return data.access_token as string;
 }
 
-// amountCents is HKD cents (integer). PayPal's Orders API wants a decimal
-// string ("128000.00" is wrong for HKD — HKD has 2 decimal places, so
-// 128000 cents = "1280.00"). Divide by 100 and fix to 2 decimals.
+// amountCents is the smallest currency unit (cents) as an integer.
+// PayPal's Orders API wants a decimal string.
+// For USD, 128000 cents = "1280.00".
 export async function createPayPalOrder(
   accessToken: string,
   amountCents: number,

@@ -102,7 +102,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const accessToken = await getPayPalAccessToken();
-    const paypalOrder = await createPayPalOrder(accessToken, subtotalCents, "HKD");
+    const paypalOrder = await createPayPalOrder(accessToken, subtotalCents, "USD");
 
     // Store both the PayPal correlation and the contact info now, while
     // the browser is definitely still here — see migration 006 for why.

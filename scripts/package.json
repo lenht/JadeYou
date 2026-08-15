@@ -1,0 +1,13 @@
+{
+  "name": "jade-you-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build tooling for the Jade You static site. Not part of the public site itself — the site's own frontend has no build step.",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-product-pages.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}

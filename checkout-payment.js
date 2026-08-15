@@ -16,7 +16,7 @@
    the whole point, not a stylistic choice. */
 
 (function () {
-  function fmt(n) { return 'HK$' + Number(n).toLocaleString('en-US'); }
+  function fmt(n) { return 'US$' + Number(n).toLocaleString('en-US'); }
 
   const FUNCTIONS_URL = window.SUPABASE_FUNCTIONS_URL;
   const ANON_KEY = window.SUPABASE_ANON_KEY;

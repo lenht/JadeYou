@@ -9,12 +9,19 @@
 
    Money-moving actions (confirming an advisor payment, recording a
    refund) go through admin_mark_order_paid() / admin_record_refund()
-   rather than raw table writes — see the schema file for why. */
+   rather than raw table writes — see the schema file for why.
+
+   Image uploads: product photos go to the public `product-images`
+   bucket, keyed by reference_sku so the bucket stays human-browsable
+   without cross-referencing the database. Certificate images go to the
+   private `certificate-images` bucket — never a permanent public URL,
+   only short-lived signed URLs generated on demand when staff click
+   "View Certificate Image". See migration 005 for why that split exists. */
 
 (function () {
   const sb = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-  const fmt = (cents) => 'HK$' + (Number(cents || 0)).toLocaleString('en-US');
+  const fmt = (cents) => 'US$' + (Number(cents || 0)).toLocaleString('en-US');
   const dollarsToCents = (v) => Math.round(Number(v || 0) * 100);
   const centsToDollars = (c) => (Number(c || 0) / 100).toFixed(2);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -244,7 +251,9 @@
         const nextActive = btn.dataset.active !== 'true';
         const { error: err } = await sb.from('products').update({ is_active: nextActive }).eq('id', id);
         if (err) { toast('Could not update product: ' + err.message, true); return; }
-        toast(nextActive ? 'Product reactivated.' : 'Product deactivated — hidden from the public site, existing orders are untouched.');
+        toast(nextActive
+          ? 'Product reactivated. Re-run generate-product-pages.mjs to publish its page again.'
+          : 'Product deactivated — hidden from checkout/reservations. Its static HTML file stays live until you remove it by hand or the generator flags it as orphaned.');
         loadProducts();
       });
     });
@@ -289,15 +298,18 @@
       specs: {}, price_cents: null, quantity_total: 1, is_active: true, category_id: categories[0] ? categories[0].id : null,
     };
     let images = [];
+    let certifications = [];
 
     if (!isNew) {
-      const [{ data: p, error: pErr }, { data: imgs, error: iErr }] = await Promise.all([
+      const [{ data: p, error: pErr }, { data: imgs, error: iErr }, { data: certs, error: cErr }] = await Promise.all([
         sb.from('products').select('*').eq('id', productId).single(),
         sb.from('product_images').select('*').eq('product_id', productId).order('sort_order'),
+        sb.from('product_certifications').select('*').eq('product_id', productId).order('created_at'),
       ]);
       if (pErr) { toast('Could not load product: ' + pErr.message, true); return; }
       product = p;
       images = imgs || [];
+      certifications = certs || [];
     }
 
     const wrap = document.getElementById('productEditorWrap');
@@ -306,13 +318,13 @@
         <h3>${isNew ? 'Add Product' : 'Edit — ' + esc(product.name)}</h3>
         <div class="admin-form-row">
           <div class="admin-field"><label>Name</label><input id="pf-name" value="${esc(product.name)}"></div>
-          <div class="admin-field"><label>Slug (URL-safe, unique)</label><input id="pf-slug" value="${esc(product.slug)}" ${isNew ? '' : 'title="Changing this breaks any bookmarked/shared product links"'}></div>
+          <div class="admin-field"><label>Slug (URL-safe, unique)</label><input id="pf-slug" value="${esc(product.slug)}" ${isNew ? '' : 'title="Changing this breaks any bookmarked/shared product links, and leaves the old static page file orphaned until you remove it"'}></div>
           <div class="admin-field"><label>Reference SKU (unique)</label><input id="pf-sku" value="${esc(product.reference_sku)}"></div>
           <div class="admin-field"><label>Category</label><select id="pf-category" class="category-select"></select></div>
-          <div class="admin-field"><label>Price (HK$, blank = Contact for Price)</label><input id="pf-price" type="number" step="0.01" min="0" value="${product.price_cents != null ? centsToDollars(product.price_cents) : ''}"></div>
+          <div class="admin-field"><label>Price (US$, blank = Contact for Price)</label><input id="pf-price" type="number" step="0.01" min="0" value="${product.price_cents != null ? centsToDollars(product.price_cents) : ''}"></div>
           <div class="admin-field"><label>Stock (total ever stocked, usually 1)</label><input id="pf-qty" type="number" min="0" value="${esc(product.quantity_total)}"></div>
           <div class="admin-field"><label>Material (short summary line)</label><input id="pf-material" value="${esc(product.material || '')}"></div>
-          <div class="admin-field"><label class="admin-toggle" style="margin-top:30px;"><input type="checkbox" id="pf-active" ${product.is_active ? 'checked' : ''}> Active (visible on the public site)</label></div>
+          <div class="admin-field"><label class="admin-toggle" style="margin-top:30px;"><input type="checkbox" id="pf-active" ${product.is_active ? 'checked' : ''}> Active (included the next time you run generate-product-pages.mjs)</label></div>
           <div class="admin-field full"><label>Description</label><textarea id="pf-desc">${esc(product.description || '')}</textarea></div>
         </div>
 
@@ -326,8 +338,13 @@
         <div class="admin-form-row">
           <div class="admin-field"><label>Image URL</label><input id="newImageUrl" placeholder="https://…"></div>
           <div class="admin-field"><label>Or Upload a File</label><input id="newImageFile" type="file" accept="image/*"></div>
+          <div class="admin-field full"><label>Alt Text (accessibility &amp; SEO — describe what's in the photo)</label><input id="newImageAlt" placeholder="e.g. The Mist Strand, full strand coiled on a red background"></div>
         </div>
         <button type="button" class="admin-btn admin-btn-sm admin-btn-ghost" id="addImageBtn">Add Photo</button>
+
+        <div class="admin-section-title">Certifications</div>
+        <p style="font-family:var(--sans-ui);font-size:0.8rem;color:var(--orchid-soft);margin:-8px 0 16px;">Certificate images are private — uploaded to a locked bucket, never a public URL. "View Certificate Image" generates a link that expires in 5 minutes.</p>
+        <div id="certList"></div>
         `}
 
         <div class="admin-form-actions">
@@ -348,7 +365,8 @@
 
     if (!isNew) {
       renderImageGrid(images, productId);
-      document.getElementById('addImageBtn').addEventListener('click', () => addProductImage(productId, images));
+      document.getElementById('addImageBtn').addEventListener('click', () => addProductImage(productId, product.reference_sku, images));
+      renderCertifications(certifications, productId, product.reference_sku);
     }
 
     document.getElementById('pf-cancel').addEventListener('click', () => { wrap.innerHTML = ''; });
@@ -387,7 +405,7 @@
         return;
       }
 
-      toast(isNew ? 'Product created.' : 'Product saved.');
+      toast((isNew ? 'Product created.' : 'Product saved.') + ' Run generate-product-pages.mjs to publish this on the site.');
       wrap.innerHTML = '';
       loadProducts();
     });
@@ -400,7 +418,7 @@
 
     grid.innerHTML = images.map((img) => `
       <div class="admin-image-tile" data-img-id="${img.id}">
-        <img src="${esc(img.url)}" alt="">
+        <img src="${esc(img.url)}" alt="${esc(img.alt_text || '')}">
         ${img.is_primary ? '<span class="primary-flag">Primary</span>' : ''}
         <div class="tile-actions">
           ${img.is_primary ? '' : '<button data-set-primary>Set Primary</button>'}
@@ -431,26 +449,37 @@
     });
   }
 
-  async function addProductImage(productId, currentImages) {
+  // reference_sku is passed in explicitly (rather than re-derived here)
+  // so the storage path is keyed by the human-readable SKU, not the
+  // database UUID — JY-N004/00-full-strand.webp instead of
+  // a1b2c3.../1699999999-IMG4044.webp. Makes the bucket auditable against
+  // a physical piece or its certificate without cross-referencing the DB.
+  async function addProductImage(productId, referenceSku, currentImages) {
     const urlInput = document.getElementById('newImageUrl');
     const fileInput = document.getElementById('newImageFile');
+    const altInput = document.getElementById('newImageAlt');
     let url = urlInput.value.trim();
+    const altText = altInput.value.trim();
+    const nextSort = (currentImages && currentImages.length) || 0;
 
     if (!url && fileInput.files[0]) {
       const file = fileInput.files[0];
-      const path = `${productId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const { error: upErr } = await sb.storage.from('product-images').upload(path, file);
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const safeName = (file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase()) || 'photo';
+      const path = `${referenceSku}/${String(nextSort).padStart(2, '0')}-${safeName}.${ext}`;
+      const { error: upErr } = await sb.storage.from('product-images').upload(path, file, { upsert: true });
       if (upErr) { toast('Upload failed: ' + upErr.message, true); return; }
       const { data: pub } = sb.storage.from('product-images').getPublicUrl(path);
       url = pub.publicUrl;
     }
 
     if (!url) { toast('Provide an image URL or choose a file to upload.', true); return; }
+    if (!altText) { toast('Alt text is required — describe what the photo shows.', true); return; }
 
-    const nextSort = (currentImages && currentImages.length) || 0;
     const { error } = await sb.from('product_images').insert({
       product_id: productId,
       url,
+      alt_text: altText,
       sort_order: nextSort,
       is_primary: nextSort === 0,
     });
@@ -458,9 +487,123 @@
 
     urlInput.value = '';
     fileInput.value = '';
+    altInput.value = '';
     const { data: imgs } = await sb.from('product_images').select('*').eq('product_id', productId).order('sort_order');
     renderImageGrid(imgs || [], productId);
     toast('Photo added.');
+  }
+
+  // ---------------------------------------------------------------------
+  // certifications
+  // ---------------------------------------------------------------------
+  function certCardHTML(cert) {
+    const isNewCert = !cert;
+    return `
+      <div class="admin-card cert-card" data-cert-id="${cert ? cert.id : ''}">
+        <h3>${isNewCert ? 'Add Certification' : esc(cert.laboratory_name) + ' — ' + esc(cert.certificate_number)}</h3>
+        <div class="admin-form-row">
+          <div class="admin-field"><label>Laboratory Name</label><input class="cert-lab-name" value="${esc(cert?.laboratory_name || '')}"></div>
+          <div class="admin-field"><label>Laboratory Location</label><input class="cert-lab-location" value="${esc(cert?.laboratory_location || '')}"></div>
+          <div class="admin-field"><label>Certificate Number</label><input class="cert-number" value="${esc(cert?.certificate_number || '')}"></div>
+          <div class="admin-field"><label>Date Tested</label><input class="cert-date-tested" type="date" value="${esc(cert?.date_tested || '')}"></div>
+          <div class="admin-field"><label>Date Issued</label><input class="cert-date-issued" type="date" value="${esc(cert?.date_issued || '')}"></div>
+          <div class="admin-field"><label>Verification URL</label><input class="cert-verify-url" value="${esc(cert?.verification_url || '')}"></div>
+          <div class="admin-field full"><label>Material Description (public conclusion)</label><input class="cert-material" value="${esc(cert?.material_description || '')}" placeholder="Natural Jadeite Jade, Type A"></div>
+          <div class="admin-field full"><label>Scope Note (e.g. "Only one piece tested")</label><input class="cert-scope" value="${esc(cert?.scope_note || '')}"></div>
+          <div class="admin-field full"><label>Test Details (JSON — instrument-level data, never shown publicly)</label><textarea class="cert-test-details">${esc(JSON.stringify(cert?.test_details || {}, null, 2))}</textarea></div>
+        </div>
+        <div class="admin-form-row">
+          <div class="admin-field"><label>Upload Certificate Image (private)</label><input class="cert-image-file" type="file" accept="image/*,.pdf"></div>
+          <div class="admin-field" style="justify-content:flex-end;">
+            ${cert?.certificate_image_url ? '<button type="button" class="admin-btn admin-btn-sm admin-btn-ghost cert-view-image" style="margin-top:26px;">View Certificate Image</button>' : ''}
+          </div>
+        </div>
+        <div class="admin-form-actions">
+          <button class="admin-btn admin-btn-sm cert-save">${isNewCert ? 'Create Certification' : 'Save Changes'}</button>
+          ${!isNewCert ? '<button class="admin-btn admin-btn-sm admin-btn-danger cert-delete">Delete</button>' : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCertifications(certs, productId, referenceSku) {
+    const wrap = document.getElementById('certList');
+    if (!wrap) return;
+    wrap.innerHTML = certs.map((c) => certCardHTML(c)).join('') + certCardHTML(null);
+
+    wrap.querySelectorAll('.cert-card').forEach((card) => {
+      const certId = card.dataset.certId || null;
+
+      card.querySelector('.cert-save').addEventListener('click', async () => {
+        const fields = {
+          product_id: productId,
+          laboratory_name: card.querySelector('.cert-lab-name').value.trim(),
+          laboratory_location: card.querySelector('.cert-lab-location').value.trim() || null,
+          certificate_number: card.querySelector('.cert-number').value.trim(),
+          date_tested: card.querySelector('.cert-date-tested').value || null,
+          date_issued: card.querySelector('.cert-date-issued').value || null,
+          verification_url: card.querySelector('.cert-verify-url').value.trim() || null,
+          material_description: card.querySelector('.cert-material').value.trim() || null,
+          scope_note: card.querySelector('.cert-scope').value.trim() || null,
+        };
+
+        const rawDetails = card.querySelector('.cert-test-details').value.trim();
+        try {
+          fields.test_details = rawDetails ? JSON.parse(rawDetails) : {};
+        } catch (e) {
+          toast('Test Details must be valid JSON.', true);
+          return;
+        }
+
+        if (!fields.laboratory_name || !fields.certificate_number) {
+          toast('Laboratory name and certificate number are required.', true);
+          return;
+        }
+
+        const fileInput = card.querySelector('.cert-image-file');
+        if (fileInput.files[0]) {
+          const file = fileInput.files[0];
+          const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+          const safeCertNum = fields.certificate_number.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+          const path = `${referenceSku}/${safeCertNum}.${ext}`;
+          const { error: upErr } = await sb.storage.from('certificate-images').upload(path, file, { upsert: true });
+          if (upErr) { toast('Certificate image upload failed: ' + upErr.message, true); return; }
+          fields.certificate_image_url = path;
+        }
+
+        const { error } = certId
+          ? await sb.from('product_certifications').update(fields).eq('id', certId)
+          : await sb.from('product_certifications').insert(fields);
+
+        if (error) { toast('Could not save certification: ' + error.message, true); return; }
+        toast('Certification saved.');
+        const { data: freshCerts } = await sb.from('product_certifications').select('*').eq('product_id', productId).order('created_at');
+        renderCertifications(freshCerts || [], productId, referenceSku);
+      });
+
+      const viewBtn = card.querySelector('.cert-view-image');
+      if (viewBtn) {
+        viewBtn.addEventListener('click', async () => {
+          const certRow = certs.find((c) => c && String(c.id) === String(certId));
+          if (!certRow || !certRow.certificate_image_url) return;
+          const { data, error } = await sb.storage.from('certificate-images').createSignedUrl(certRow.certificate_image_url, 300);
+          if (error) { toast('Could not generate link: ' + error.message, true); return; }
+          window.open(data.signedUrl, '_blank');
+        });
+      }
+
+      const deleteBtn = card.querySelector('.cert-delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+          if (!confirm('Delete this certification record? This cannot be undone.')) return;
+          const { error } = await sb.from('product_certifications').delete().eq('id', certId);
+          if (error) { toast('Could not delete: ' + error.message, true); return; }
+          toast('Certification deleted.');
+          const { data: freshCerts } = await sb.from('product_certifications').select('*').eq('product_id', productId).order('created_at');
+          renderCertifications(freshCerts || [], productId, referenceSku);
+        });
+      }
+    });
   }
 
   // ---------------------------------------------------------------------
@@ -572,7 +715,7 @@
     const markPaidBtn = row.querySelector('.mark-paid-btn');
     if (markPaidBtn) {
       markPaidBtn.addEventListener('click', async () => {
-        const amountStr = prompt('Amount received, in HK$ (defaults to the order total):', centsToDollars(order.total_cents));
+        const amountStr = prompt('Amount received, in US$ (defaults to the order total):', centsToDollars(order.total_cents));
         if (amountStr === null) return;
         const reference = prompt('Reference (bank transfer reference, invoice number, etc.) — optional:', '') || null;
         const { error } = await sb.rpc('admin_mark_order_paid', {
@@ -589,7 +732,7 @@
     row.querySelectorAll('.refund-btn').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const maxCents = parseInt(btn.dataset.max, 10);
-        const amountStr = prompt('Refund amount, in HK$ (captured amount was ' + fmt(maxCents) + '):', centsToDollars(maxCents));
+        const amountStr = prompt('Refund amount, in US$ (captured amount was ' + fmt(maxCents) + '):', centsToDollars(maxCents));
         if (amountStr === null) return;
         const reason = prompt('Reason for refund (shown internally only):', '') || null;
         const { error } = await sb.rpc('admin_record_refund', {

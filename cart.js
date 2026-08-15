@@ -8,7 +8,7 @@
   const STORAGE_KEY = 'jadeyou_cart_v1';
 
   function fmt(n){
-    return 'HK$' + Number(n).toLocaleString('en-US');
+    return 'US$' + Number(n).toLocaleString('en-US');
   }
 
   const Cart = {
