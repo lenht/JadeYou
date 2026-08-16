@@ -6,7 +6,7 @@
  *
  *   npm install @supabase/supabase-js
  *   SUPABASE_URL=https://xxxx.supabase.co \
- *   SUPABASE_SERVICE_ROLE_KEY=your-secret-key \
+ *   SUPABASE_SECRET_KEY=your-secret-key \
  *   node generate-product-pages.mjs
  *
  * Uses the SECRET key, not the publishable key — this runs on your machine
@@ -27,14 +27,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY as environment variables before running.');
+if (!SUPABASE_URL || !SUPABASE_SECRET_KEY) {
+  console.error('Set SUPABASE_URL and SUPABASE_SECRET_KEY as environment variables before running.');
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY);
 
 // Resolve relative to this script's own location, not the current working
 // directory — so `node scripts/generate-product-pages.mjs` from the repo
@@ -44,6 +44,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 // you place the script somewhere else.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = path.resolve(__dirname, '..', 'product');
+const COLLECTIONS_DIR = path.resolve(__dirname, '..', 'collections');
 
 // ----------------------------------------------------------------------------
 // Category display metadata (icon path + card colour) isn't modeled in the
@@ -126,6 +127,179 @@ function relatedCard(p) {
         ${priceLine}
         <span class="p-link">View Details &rarr;</span>
       </a>`;
+}
+
+// ----------------------------------------------------------------------------
+// Collection (category) listing pages — collections/{slug}.html.
+//
+// The six collection pages used to be hand-written HTML with exactly three
+// hardcoded mockup products each and no way to see more. This generates
+// them the same way product pages are generated: pull every ACTIVE product
+// in the category from the database and list all of them, full stop. At
+// this catalog's scale (well under 100 SKUs total, so realistically a
+// handful per category) a single page with no pagination is the right
+// answer — "view more" only becomes a real need far past where this
+// business expects to be.
+// ----------------------------------------------------------------------------
+
+function categoryProductCard(p, meta) {
+  const priceLine = p.price_cents == null
+    ? '<p class="p-contact-note">Contact for Price</p>'
+    : `<p class="p-price">${fmtPrice(p.price_cents)}</p>`;
+  const primary = (p.product_images || [])
+    .slice()
+    .sort((a, b) => (b.is_primary - a.is_primary) || (a.sort_order - b.sort_order))[0];
+  const imageContent = primary
+    ? `<img src="${esc(primary.url)}" alt="${esc(primary.alt_text || p.name)}" style="width:100%;height:100%;object-fit:cover;">`
+    : `<svg viewBox="0 0 48 48" fill="none" stroke-width="1.3">${meta.icon}</svg>`;
+  return `<a class="product-card" href="../product/${p.slug}.html">
+        <div class="p-image ${meta.tone}">${imageContent}</div>
+        <div class="p-ref">${esc(p.reference_sku)}</div>
+        <h3>${esc(p.name)}</h3>
+        <p class="p-material">${esc(p.material || '')}</p>
+        ${priceLine}
+        <span class="p-link">View Details &rarr;</span>
+      </a>`;
+}
+
+function renderCategoryPage(category, products) {
+  const meta = CATEGORY_META[category.slug] || CATEGORY_META.rings;
+  const description = category.description || '';
+
+  const bodyHTML = products.length === 0
+    ? `<div class="admin-empty" style="text-align:center;padding:60px 0;font-family:var(--serif-body);color:var(--ink-soft);font-size:1.1rem;">
+      New pieces for this collection are on the way. In the meantime, please <a href="../index.html#atelier" style="color:var(--jade-mid);border-bottom:1px solid var(--jade-mid);">contact the Atelier</a> directly.
+    </div>`
+    : `<div class="product-grid">
+      ${products.map((p) => categoryProductCard(p, meta)).join('\n      ')}
+    </div>`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${esc(category.name)} — Jade You</title>
+<meta name="description" content="${esc(category.name)} by Jade You: ${esc(description)}">
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32.png">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,900;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles.css">
+<script>window.SITE_PREFIX = "../";</script>
+</head>
+<body>
+<header class="site-header" id="siteHeader">
+  <a href="../index.html" class="brand">
+    <img src="../assets/logo-mark-128.png" alt="">
+    <span>JADE&nbsp;YOU</span>
+  </a>
+  <nav class="nav-links" id="navLinks">
+    <a href="../index.html#collections">Collections</a>
+    <a href="../index.html#provenance">Provenance</a>
+    <a href="../index.html#journal">Jade Journal</a>
+    <a href="../index.html#atelier">Atelier</a>
+    <a href="../index.html#atelier" class="nav-cta">Request Appointment</a>
+  </nav>
+  <button class="cart-toggle" aria-label="Open reservation cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+    <span class="cart-badge hidden">0</span>
+  </button>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<section class="page-header">
+  <div class="wrap">
+    <div class="breadcrumb"><a href="../index.html">Home</a> <span class="sep">/</span> <a href="../index.html#collections">Collections</a> <span class="sep">/</span> <span class="current">${esc(category.name)}</span></div>
+    <h1>${esc(category.name)}</h1>
+    <p>${esc(description)}</p>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="wrap">
+    ${bodyHTML}
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <a href="../index.html" class="footer-brand">
+        <img src="../assets/logo-mark-128.png" alt="">
+        <span>JADE&nbsp;YOU</span>
+      </a>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>Explore</h4>
+          <a href="../index.html#collections">Collections</a>
+          <a href="../index.html#provenance">Provenance</a>
+          <a href="../index.html#journal">Jade Journal</a>
+        </div>
+        <div class="footer-col">
+          <h4>House</h4>
+          <a href="../index.html#atelier">Atelier</a>
+          <a href="../index.html#atelier">Request Appointment</a>
+          <a href="../index.html#atelier">Bespoke Commissions</a>
+        </div>
+        <div class="footer-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@jadeyou.com">hello@jadeyou.com</a>
+          <a href="../index.html#atelier">Central, Hong Kong</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Jade You. All rights reserved.</span>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+        <a href="#" aria-label="WeChat"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<div class="wechat-pop" id="wechatPop">
+  <div class="wechat-card">
+    <button class="wechat-close" id="wechatClose" aria-label="Close">&times;</button>
+    <img src="../assets/wechat-qr.png" alt="Jade You WeChat QR code">
+    <h4>Add Jade You on WeChat</h4>
+    <p>Scan to chat with our Atelier team directly, or search ID: JadeYouHK</p>
+  </div>
+</div>
+
+<div class="cart-overlay" id="cartOverlay"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-drawer-head">
+    <h3>Your Reservations <span class="eyebrow">(held for 48 hours)</span></h3>
+    <button class="cart-drawer-close" id="cartDrawerClose" aria-label="Close">&times;</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-drawer-foot" id="cartDrawerFoot" style="display:none;">
+    <div class="cart-subtotal"><span>Subtotal</span><span class="amt" id="cartSubtotal">US$0</span></div>
+    <div class="cart-note">Shipping and final total confirmed by your Atelier advisor.</div>
+    <a href="../checkout.html" class="btn btn-solid">Proceed to Checkout</a>
+  </div>
+</div>
+
+<script src="../main.js"></script>
+<script src="../cart.js"></script>
+<script>
+  (function(){
+    var pop = document.getElementById('wechatPop');
+    var close = document.getElementById('wechatClose');
+    document.querySelectorAll('.js-wechat').forEach(function(btn){
+      btn.addEventListener('click', function(e){ e.preventDefault(); pop.classList.add('open'); });
+    });
+    if(close) close.addEventListener('click', function(){ pop.classList.remove('open'); });
+    if(pop) pop.addEventListener('click', function(e){ if(e.target===pop) pop.classList.remove('open'); });
+  })();
+</script>
+</body>
+</html>
+`;
 }
 
 function renderPage(product, category, images, certs, related) {
@@ -379,6 +553,35 @@ async function main() {
 
   console.log(`\nDone — ${products.length} page(s) written to ${OUTPUT_DIR}/`);
   await checkOrphans(new Set(products.map((p) => p.slug)));
+
+  // ------------------------------------------------------------------
+  // Collection listing pages — one per category, every active product
+  // in it, no cap. Replaces the old hand-written collections/*.html
+  // files that hardcoded exactly three mockup products each.
+  // ------------------------------------------------------------------
+  const { data: allCategories, error: catError } = await supabase
+    .from('categories')
+    .select('*')
+    .order('sort_order');
+
+  if (catError) {
+    console.error('Could not fetch categories — skipping collection page generation:', catError.message);
+    return;
+  }
+
+  await mkdir(COLLECTIONS_DIR, { recursive: true });
+
+  for (const cat of allCategories) {
+    const catProducts = products
+      .filter((p) => p.category_id === cat.id)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const html = renderCategoryPage(cat, catProducts);
+    await writeFile(path.join(COLLECTIONS_DIR, `${cat.slug}.html`), html, 'utf8');
+    console.log(`✓ ${cat.name}  →  collections/${cat.slug}.html  (${catProducts.length} product${catProducts.length === 1 ? '' : 's'})`);
+  }
+
+  console.log(`\nCollection pages done — ${allCategories.length} written to ${COLLECTIONS_DIR}/`);
 }
 
 main();
