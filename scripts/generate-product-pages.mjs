@@ -302,13 +302,32 @@ function renderCategoryPage(category, products) {
 `;
 }
 
+// Thumbnail strip shown under the hero image on the product detail page.
+// Only rendered when there's something to switch between — a single-photo
+// (or photo-less) product just shows the hero on its own, same as before.
+// Each button carries the full-size url/alt as data attributes; the tiny
+// inline script at the bottom of renderPage() swaps the hero <img> on
+// click. Deliberately plain <button>/data-* + vanilla JS rather than a
+// framework or a lightbox library — this is a static-HTML generator with
+// no build step, so the simplest thing that works is the right amount of
+// complexity here.
+function productThumbsHTML(images, name) {
+  if (!images || images.length < 2) return '';
+  return `<div class="product-thumbs">
+        ${images.map((img, i) => `<button type="button" class="product-thumb${i === 0 ? ' active' : ''}" data-src="${esc(img.url)}" data-alt="${esc(img.alt_text || name)}" aria-label="View photo ${i + 1} of ${images.length}">
+          <img src="${esc(img.url)}" alt="${esc(img.alt_text || name)}" loading="lazy">
+        </button>`).join('\n        ')}
+      </div>`;
+}
+
 function renderPage(product, category, images, certs, related) {
   const meta = CATEGORY_META[category.slug] || CATEGORY_META.rings;
   const name = product.name, ref = product.reference_sku;
 
   const heroContent = images[0]
-    ? `<img src="${esc(images[0].url)}" alt="${esc(images[0].alt_text || name)}" style="width:100%;height:100%;object-fit:cover;">`
+    ? `<img id="productHeroImg" src="${esc(images[0].url)}" alt="${esc(images[0].alt_text || name)}" style="width:100%;height:100%;object-fit:cover;">`
     : `<svg viewBox="0 0 48 48" fill="none" stroke-width="1.1">${meta.icon}</svg>`;
+  const thumbsHTML = productThumbsHTML(images, name);
 
   const specRows = sortSpecs(product.specs).map(([k, v]) => `<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('\n        ');
   const allSpecRows = [specRows, certRows(certs)].filter(Boolean).join('\n        ');
@@ -382,8 +401,11 @@ function renderPage(product, category, images, certs, related) {
 <section class="product-detail">
   <div class="wrap">
     <div class="product-detail-grid">
-      <div class="product-hero-image ${meta.tone}">
-        ${heroContent}
+      <div class="product-gallery">
+        <div class="product-hero-image ${meta.tone}">
+          ${heroContent}
+        </div>
+        ${thumbsHTML}
       </div>
       <div class="product-info">
         <div class="product-ref">Reference ${esc(ref)}</div>
@@ -397,6 +419,22 @@ function renderPage(product, category, images, certs, related) {
     </div>
   </div>
 </section>
+
+<script>
+  (function(){
+    var heroImg = document.getElementById('productHeroImg');
+    var thumbs = document.querySelectorAll('.product-thumb');
+    if (!heroImg || thumbs.length === 0) return;
+    thumbs.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        heroImg.src = btn.dataset.src;
+        heroImg.alt = btn.dataset.alt;
+        thumbs.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+      });
+    });
+  })();
+</script>
 
 <section class="related">
   <div class="wrap">

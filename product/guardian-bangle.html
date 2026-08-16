@@ -44,8 +44,11 @@
 <section class="product-detail">
   <div class="wrap">
     <div class="product-detail-grid">
-      <div class="product-hero-image tone-jade">
-        <svg viewBox="0 0 48 48" fill="none" stroke-width="1.1"><circle cx="24" cy="24" r="17"/><circle cx="24" cy="24" r="10"/></svg>
+      <div class="product-gallery">
+        <div class="product-hero-image tone-jade">
+          <svg viewBox="0 0 48 48" fill="none" stroke-width="1.1"><circle cx="24" cy="24" r="17"/><circle cx="24" cy="24" r="10"/></svg>
+        </div>
+        
       </div>
       <div class="product-info">
         <div class="product-ref">Reference JY-B003</div>
@@ -68,6 +71,22 @@
     </div>
   </div>
 </section>
+
+<script>
+  (function(){
+    var heroImg = document.getElementById('productHeroImg');
+    var thumbs = document.querySelectorAll('.product-thumb');
+    if (!heroImg || thumbs.length === 0) return;
+    thumbs.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        heroImg.src = btn.dataset.src;
+        heroImg.alt = btn.dataset.alt;
+        thumbs.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+      });
+    });
+  })();
+</script>
 
 <section class="related">
   <div class="wrap">

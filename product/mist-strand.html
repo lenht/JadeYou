@@ -44,8 +44,24 @@
 <section class="product-detail">
   <div class="wrap">
     <div class="product-detail-grid">
-      <div class="product-hero-image tone-violet">
-        <img src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/00-coiled-red.jpg" alt="The Mist Strand, full strand coiled on a red background" style="width:100%;height:100%;object-fit:cover;">
+      <div class="product-gallery">
+        <div class="product-hero-image tone-violet">
+          <img id="productHeroImg" src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/00-coiled-red.jpg" alt="The Mist Strand, full strand coiled on a red background" style="width:100%;height:100%;object-fit:cover;">
+        </div>
+        <div class="product-thumbs">
+        <button type="button" class="product-thumb active" data-src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/00-coiled-red.jpg" data-alt="The Mist Strand, full strand coiled on a red background" aria-label="View photo 1 of 4">
+          <img src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/00-coiled-red.jpg" alt="The Mist Strand, full strand coiled on a red background" loading="lazy">
+        </button>
+        <button type="button" class="product-thumb" data-src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/01-coiled-white.jpg" data-alt="The Mist Strand, full strand coiled on a white background" aria-label="View photo 2 of 4">
+          <img src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/01-coiled-white.jpg" alt="The Mist Strand, full strand coiled on a white background" loading="lazy">
+        </button>
+        <button type="button" class="product-thumb" data-src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/02-draped.jpg" data-alt="The Mist Strand, full length draped to show scale" aria-label="View photo 3 of 4">
+          <img src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/02-draped.jpg" alt="The Mist Strand, full length draped to show scale" loading="lazy">
+        </button>
+        <button type="button" class="product-thumb" data-src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/03-clasp-detail.jpg" data-alt="The Mist Strand, close-up of the 24K gold hook clasp" aria-label="View photo 4 of 4">
+          <img src="https://iuqetedvpzijfpdpdoxf.supabase.co/storage/v1/object/public/product-images/JY-N004/03-clasp-detail.jpg" alt="The Mist Strand, close-up of the 24K gold hook clasp" loading="lazy">
+        </button>
+      </div>
       </div>
       <div class="product-info">
         <div class="product-ref">Reference JY-N004</div>
@@ -81,6 +97,22 @@
     </div>
   </div>
 </section>
+
+<script>
+  (function(){
+    var heroImg = document.getElementById('productHeroImg');
+    var thumbs = document.querySelectorAll('.product-thumb');
+    if (!heroImg || thumbs.length === 0) return;
+    thumbs.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        heroImg.src = btn.dataset.src;
+        heroImg.alt = btn.dataset.alt;
+        thumbs.forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+      });
+    });
+  })();
+</script>
 
 <section class="related">
   <div class="wrap">
