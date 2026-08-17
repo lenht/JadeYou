@@ -2,3 +2,4 @@
 scripts/node_modules
 .env*
 /instructions/
+.Rhistory
